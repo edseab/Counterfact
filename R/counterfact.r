@@ -67,7 +67,7 @@ if(length(factors)>0){
 		nd[(n+1):(n + extras),names(lvls)] <- as.vector(unlist(lvls)))
 }
 	
-nd <-as.list(nd)
+nd <-   as.list(nd)
 
 
 mm <- model.matrix(as.formula(paste("~",paste(vars, collapse="+"))), data=nd)

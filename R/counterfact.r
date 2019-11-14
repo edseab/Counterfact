@@ -19,7 +19,7 @@ d <- get(as.character(data))
 if (length(range)==1){if(range=="standard") range <- range(d[,x],na.rm=T)}
 f <- as.function (default)
 
-ifelse(class(object)[1]=="lmerMod" | class(object)[1]=="glmmPQL",
+ifelse(class(object)[1]=="lmerMod" | class(object)[1]=="glmmPQL" | class(object)[1]=="glmerMod",
 				betas <- fixef(object),
 				betas <- coef(object))
 vars <- attr(terms(object),"term.labels")
@@ -78,8 +78,8 @@ pr <- data.frame(cbind(xvalues,y_hat))
 colnames (pr) [2] <- "predicted.mean"
 
 if (CI) {
-if(class(object)[1]=="lmerMod"){ predFun<-function(.) mm%*%fixef(.)
-bb<-bootMer(object,FUN=predFun,nsim=CIsims, .progress=progress)
+if(class(object)[1]=="lmerMod" | class(object)[1]=="glmerMod"){ predFun<-function(.) mm%*%fixef(.)
+bb<-bootMer(object,FUN=predFun,nsim=CIsims)
 bb_se<-apply(bb$t,2,function(x) x[order(x)])
 lo <- which.min(abs(1:CIsims - (100-conf)*CIsims/200))
 hi <- CIsims - lo

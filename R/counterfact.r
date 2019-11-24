@@ -46,6 +46,9 @@ if (!is.null(other)) {
 	ph <- other[which(names(other) %in% coefs)]
 	nd [match(names(ph), coefs)] <- as.vector(unlist(ph))
 }
+
+if(!is.null(values)) n <- length(values)
+
 nd <- data.frame(matrix(nd,n,length(nd),byrow=T))
 nd[,which(!(colnames(d) %in% factors))] <- unlist(lapply(as.list(nd)[which(!(colnames(d) %in% factors))],function(.)as.numeric(as.character(.))))
 nd[,which(colnames(d) %in% factors)] <- unlist(lapply(data.frame(nd[which(colnames(d) %in% factors)]),as.character))

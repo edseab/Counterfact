@@ -1,5 +1,5 @@
 
-counterfact <- function (object, x, range = "standard", n=1000, default = mean, CI=FALSE, PI=FALSE,
+counterfact <- function (object, x, range = "standard", n=1000, values = NULL, default = mean, CI=FALSE, PI=FALSE,
 other=NULL, CIsims = 1000, PIsims= 1000, conf=95, odds.to.prob=F, data=summary(object)$call$data, progress="none",...){
 
 
@@ -52,6 +52,7 @@ nd[,which(colnames(d) %in% factors)] <- unlist(lapply(data.frame(nd[which(colnam
 colnames (nd) <- coefs
 
 xvalues <-seq(range[1],range[2],length.out=n)
+if(!is.null(values)) xvalues <- values
 nd [,grep(x,coefs)] <- xvalues
 
 if(length(factors)>0){

@@ -88,11 +88,11 @@ pr$UpperCI <- bb_se[hi,]
 }
 
 if(class(object)[1]=="lm"){
-v <-vcov(mod)
+v <-vcov(object)
 var.pred <- rowSums((mm %*% v) * mm) # more efficient way of calculating diag(mm %*% v %*% t(mm))
 # this is because var(y_hat) = var(X*B_hat) = X*var(B_hat)*t(X)
 se.pred<-sqrt(var.pred)
-tval <- qt((100-conf)/200, df=(df.residual(mod)))
+tval <- qt((100-conf)/200, df=(df.residual(object)))
 pr$LowerCI <- y_hat+se.pred*tval
 pr$UpperCI <- y_hat-se.pred*tval
 }

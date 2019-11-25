@@ -15,7 +15,6 @@ test_that("basic linear model works", {
 	mod<-lm(y~x1+x2+x3,data=d)
 	expect_silent(out <- counterfact(mod, x="x1", CI=T, other=list(x2=21)))
 	expect_equal(nrow(out), 1000)
-	
 	expect_error(counterfact(mod, x="x1", CI=T, other=list(nonsense=21)))
 	
 })

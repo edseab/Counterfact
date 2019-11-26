@@ -109,7 +109,7 @@ if(class(object)[1]=="glmmPQL"){
 }
 }
 
-if(unlink=T){
+if(unlink==T){
 link <- family(object)[2]
 if(link="log") pr[,2:4] <- exp(pr[,2:4])
 if(link="logit") pr[,2:4] <- exp(pr[,2:4])/(exp(pr[,2:4])+1)

@@ -87,7 +87,7 @@ pr$LowerCI <- bb_se[lo,]
 pr$UpperCI <- bb_se[hi,]
 }
 
-if(class(object)[1]=="lm"){
+if(class(object)[1]=="lm" | class(object)[1]=="glm"){
 v <-vcov(object)
 var.pred <- rowSums((mm %*% v) * mm) # more efficient way of calculating diag(mm %*% v %*% t(mm))
 # this is because var(y_hat) = var(X*B_hat) = X*var(B_hat)*t(X)

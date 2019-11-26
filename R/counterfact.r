@@ -1,6 +1,6 @@
 
 counterfact <- function (object, x, range = "standard", n=1000, values = NULL, default = mean, CI=FALSE, PI=FALSE,
-other=NULL, CIsims = 1000, PIsims= 1000, conf=95, odds.to.prob=F, data=summary(object)$call$data, progress="none",...){
+other=NULL, CIsims = 1000, PIsims= 1000, conf=95, unlink=F, data=summary(object)$call$data, progress="none",...){
 
 
 # Classic errors
@@ -108,6 +108,14 @@ if(class(object)[1]=="glmmPQL"){
     pr$UpperCI <- apply(sim,2,quantile,1-((1-conf/100)/2))
 }
 }
+
+if(unlink=T){
+link <- family(object)[2]
+if(link="log") pr[,2:4] <- exp(pr[,2:4])
+if(link="logit") pr[,2:4] <- exp(pr[,2:4])/(exp(pr[,2:4])+1)
+
+}
+
 return (pr)
 
 

@@ -16,7 +16,8 @@ d <- get(as.character(data))
 if (length(range)==1){if(range=="standard") range <- range(d[,x],na.rm=T)}
 f <- as.function (default)
 
-ifelse(class(object)[1]=="lmerMod" | class(object)[1]=="glmmPQL" | class(object)[1]=="glmerMod",
+ifelse((class(object)[1]=="lmerMod" | class(object)[1]=="glmmPQL" 
+     | class(object)[1]=="glmerMod" | class(object)[1]="lmerModLmerTest"),
 				betas <- fixef(object),
 				betas <- coef(object))
 vars <- attr(terms(object),"term.labels")

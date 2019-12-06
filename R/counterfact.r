@@ -111,10 +111,7 @@ if(class(object)[1]=="glmmPQL"){
 }
 
 if(unlink==T){
-link <- family(object)[2]
-if(link=="log") pr[,2:ncol(pr)] <- exp(pr[,2:ncol(pr)])
-if(link=="logit") pr[,2:ncol(pr)] <- exp(pr[,2:ncol(pr)])/(exp(pr[,2:ncol(pr)])+1)
-
+pr[,2:ncol(pr)] <- object$linkinv(pr[,2:ncol(pr)])
 }
 
 return (pr)

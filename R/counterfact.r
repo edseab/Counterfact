@@ -111,7 +111,7 @@ if(class(object)[1]=="glmmPQL"){
 }
 
 if(unlink==T){
-pr[,2:ncol(pr)] <- object$linkinv(pr[,2:ncol(pr)])
+pr[,2:ncol(pr)] <- family(object)$linkinv(pr[,2:ncol(pr)])
 }
 
 return (pr)

@@ -2,15 +2,14 @@
 counterfact <- function (object, x, range = "standard", n=1000, values = NULL, default = mean, CI=FALSE, PI=FALSE,
 other=NULL, CIsims = 1000, PIsims= 1000, conf=95, unlink=F, data=summary(object)$call$data, progress="none",...){
 
+d <- get(as.character(data))
+if (!is.character(x)) x <- deparse(substitute(x))
 
 # Classic errors
 if (is.null(data)) stop("Model data must be inputed as data frame")
-if (!is.character(x)) stop("x must be inputed as character object")
 if (!is.null(other) & !is.list(other)) stop("other variables must be inputed as list")
-		
-d <- get(as.character(data))
-# if (any(apply(d,2,function(x) !is.numeric(x)))){
-	# stop("Non numeric variable - choose counterfactual value")}
+if (any(apply(d,2,function(x) !is.numeric(x) & names(x)%in% ))) {
+	stop("Non numeric variable - choose counterfactual value")}
 
 # extract range	
 if (length(range)==1){if(range=="standard") range <- range(d[,x],na.rm=T)}

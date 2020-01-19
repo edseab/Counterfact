@@ -1,0 +1,47 @@
+
+
+test_that("zero inflation model works", {
+	n <- 200
+	num_obs <- sample(3:6, n,replace=T, prob=c(0.1,0.3, 0.4, 0.2))
+	obs<- rep(1:n,num_obs)
+	N<-sum(num_obs)
+	
+	# Variables
+	x1<-runif(N,-10,10)
+	x2<-rbinom(N,9,0.2)
+	x3<-rnorm(N,3,5)
+	x4<-rnorm(N,0.5,1)
+	ran_sd <- 2
+	x5<-rnorm(n,0,ran_sd)
+	
+	# Count
+	ac<- 0.6
+	bc1<- 0.2
+	bc2<- -.04
+	bc3<- -.024
+	sdc<-0.3
+	lambda <- ac + bc1*x1 + bc2*x2 + bc3*x3 + x5[obs] + rnorm(N,0,sdc)
+	count <- rpois(N,exp(lambda))
+	
+	# Zero
+	az<- 0.5
+	bz2<-0.9
+	bz4<- -3.4
+	sdz<-3
+	log_odds<- az + bz2*x2 + bz4*x4 +rnorm(N,0,sdc)
+	p <- exp(log_odds)/(1+exp(log_odds))
+	zero <- rbinom(N,prob=p,size=1)
+	# Outcome
+	y <- zero*count
+
+	d<- as.data.frame(cbind(y,x1,x2,x3,x4))
+	
+	library(pscl)
+	
+	mod<-zeroinfl(y~x1+x2+x3+x4 + (1|x5),data=d, dist="poisson")
+	expect_silent(out <- counterfact(mod, x="x1", CI=T, other=list(x2=21)))
+	expect_equal(nrow(out), 1000)
+	expect_error(counterfact(mod, x="x1", CI=T, other=list(nonsense=21)))
+	expect_equal(ncol(out),4)
+	
+})

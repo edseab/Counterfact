@@ -8,7 +8,7 @@ if (!is.character(x)) x <- deparse(substitute(x))
 # Classic errors
 if (is.null(data)) stop("Model data must be inputed as data frame")
 if (!is.null(other) & !is.list(other)) stop("other variables must be inputed as list")
-if (any(apply(d,2,function(x) !is.numeric(x) & names(x)%in% ))) {
+if (any(apply(d,2,function(x) !is.numeric(x) & !names(x)%in% names(other)))) {
 	stop("Non numeric variable - choose counterfactual value")}
 
 # extract range	

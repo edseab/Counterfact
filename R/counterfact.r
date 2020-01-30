@@ -12,7 +12,7 @@ if (any(apply(d,2,function(x) !is.numeric(x) & !names(x)%in% names(other)))) {
 	stop("Non numeric variable - choose counterfactual value")}
 
 # extract range	
-if (length(range)==1){if(range=="standard") range <- range(d[,x],na.rm=T)}
+if (length(range)==1){if(range=="standard") range <- range(as.numeric(d[,x]),na.rm=T)}
 f <- as.function (default)
 
 ifelse((class(object)[1]=="lmerMod" | class(object)[1]=="glmmPQL" | 
@@ -58,13 +58,14 @@ xvalues <-seq(range[1],range[2],length.out=n)
 if(!is.null(values)) xvalues <- values
 nd [,grep(x,coefs)] <- xvalues
 
+# This part is just so model.matrix wont get freaked out about full rank
 if(length(factors)>0){
 	extras <- prod(unlist(lapply(as.list(d)[factors],function(.)length(unique(.)))))
 	nd <- rbind (nd, nd[(n-extras+1):n,])
 	lvls <- lapply(as.list(d)[factors],function(.)levels(as.factor(.)))
-	ifelse (length(lvls)>1,
-		for(i in 1:length(lvls)) nd[(n+1):(n + extras),names(lvls)[i]] <-as.vector(unlist(lvls[i])),
-		nd[(n+1):(n + extras),names(lvls)] <- as.vector(unlist(lvls)))
+	if (length(lvls)>1){
+		for(i in 1:length(lvls)) nd[(n+1):(n + extras),names(lvls)[i]] <-as.vector(unlist(lvls[i]))
+		} else nd[(n+1):(n + extras),names(lvls)] <- as.vector(unlist(lvls))
 }
 	
 nd <-   as.list(nd)

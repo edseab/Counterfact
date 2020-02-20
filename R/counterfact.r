@@ -23,7 +23,7 @@ if(length(grep(":",vars))>0) coefs <- vars[-grep(":",vars)]
 if(length(grep("I\\(",coefs))>0) coefs <- coefs[-grep("I\\(",vars)]
 d <- d [,coefs]
 
-factors <- names(which(lapply(d,class) == "character" | lapply(d,class) =="factor")))
+factors <- names(which(lapply(d,class) == "character" | lapply(d,class) =="factor"))
 if (length(factors)>0){
 	if(any(!(factors %in% names(other)))) 
 					stop (paste("Non numeric variable: (",paste(factors,collapse=";"),"). Choose counterfactual value"), sep="")

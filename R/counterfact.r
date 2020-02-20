@@ -8,8 +8,6 @@ if (!is.character(x)) x <- deparse(substitute(x))
 # Classic errors
 if (is.null(data)) stop("Model data must be inputed as data frame")
 if (!is.null(other) & !is.list(other)) stop("other variables must be inputed as list")
-if (any(apply(d,2,function(x) !is.numeric(x) & !names(x)%in% names(other)))) {
-	stop("Non numeric variable - choose counterfactual value")}
 
 # extract range	
 if (length(range)==1){if(range=="standard") range <- range(as.numeric(d[,x]),na.rm=T)}
@@ -25,7 +23,7 @@ if(length(grep(":",vars))>0) coefs <- vars[-grep(":",vars)]
 if(length(grep("I\\(",coefs))>0) coefs <- coefs[-grep("I\\(",vars)]
 d <- d [,coefs]
 
-factors <- names(which(unlist(lapply(d,function(.)is.character(.)|is.factor(.)))))
+factors <- names(which(lapply(d,class) == "character" | lapply(d,class) =="factor")))
 if (length(factors)>0){
 	if(any(!(factors %in% names(other)))) 
 					stop (paste("Non numeric variable: (",paste(factors,collapse=";"),"). Choose counterfactual value"), sep="")

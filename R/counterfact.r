@@ -1,45 +1,56 @@
 
 counterfact <- function (object, x, range = "standard", n=1000, values = NULL, default = mean, CI=FALSE, PI=FALSE,
-other=NULL, CIsims = 1000, PIsims= 1000, conf=95, unlink=F, data=summary(object)$call$data, progress="none",...){
+other=NULL, CIsims = 1000, PIsims= 1000, conf=95, unlink=F, data=summary(object)$call$data, progress="none", use.predict=F,...){
 
-d <- get(as.character(data))
+
+ifelse(class(object)[1]=="brmsfit", d <- object$data, d <- eval(parse(text=as.character(c(data)))))
 if (!is.character(x)) x <- deparse(substitute(x))
 
 # Classic errors
-if (is.null(data)) stop("Model data must be inputed as data frame")
+if (is.null(data) & class(object)[1]!="brmsfit") stop("Model data must be inputed as data frame")
 if (!is.null(other) & !is.list(other)) stop("other variables must be inputed as list")
 
 # extract range	
 if (length(range)==1){if(range=="standard") range <- range(as.numeric(d[,x]),na.rm=T)}
 f <- as.function (default)
 
-ifelse((class(object)[1]=="lmerMod" | class(object)[1]=="glmmPQL" | 
-        class(object)[1]=="glmerMod" | class(object)[1]=="lmerModLmerTest"),
-				betas <- fixef(object),
-				betas <- coef(object))
+if(class(object)[1] %in% c("brmsfit")){
+ betas <- as.data.frame(fixef(object))$Estimate
+ coefs <- names(object$data)[!names(object$data) %in% c(object$formula$resp, object$ranef$group, "Intercept")]
+ vars <- attr(terms(as.formula(object$formula)), "term.labels")
+ vars <- vars[!grepl(" | ", vars)]
+}else {
+if(class(object)[1] %in% c("lmerMod","glmmPQL","glmerMod","lmerModLmerTest")) betas <- fixef(object)
+if(class(object)[1] %in% c("lm")) betas <- coef(object)
+
 vars <- attr(terms(object),"term.labels")
 coefs<-vars
 if(length(grep(":",vars))>0) coefs <- vars[-grep(":",vars)]
 if(length(grep("I\\(",coefs))>0) coefs <- coefs[-grep("I\\(",vars)]
+}
 d <- d [,coefs]
 
 factors <- names(which(lapply(d,class) == "character" | lapply(d,class) =="factor"))
 if (length(factors)>0){
-	if(any(!(factors %in% names(other)))) 
-					stop (paste("Non numeric variable: (",paste(factors,collapse=";"),"). Choose counterfactual value"), sep="")
+    unspecced  <- !(factors %in% names(other))
+	if(any(unspecced)) 
+					stop (paste("Non numeric variable: (",paste(factors[unspecced],collapse=";"),"). Choose counterfactual value"), sep="")
 	}
 
-nd <- unlist(lapply(d[,which(!(colnames(d) %in% factors))],function(x)f(x,na.rm=T)))
+if(all(colnames(d) %in% factors)) stop ("counterfact bugs with no continuous predictors. For now.")
+
+nd <- unlist(lapply(as.data.frame(d[,which(!(colnames(d) %in% factors))]),function(x)f(x,na.rm=T)))
+names(nd) <- colnames(d)[which(!(colnames(d) %in% factors))]
 if (length(factors)>0) {for (i in 1:length(factors)){
 	nd <- append(nd, NA, which(colnames(d)==factors[i])-1)}
 	names(nd)[which(colnames(d) %in% factors)]<-factors}
 
-if (!is.null(other) & any(!(names(other) %in% coefs))) {
-	wrong <- names(other)[which(!(names(other) %in% coefs))]
-	ifelse (length(wrong)>1, stop (paste("Variables", wrong, "not found in model")),
-							 stop (paste("Variable", wrong, "not found in model"))
-			)              
-}
+# if (!is.null(other) & any(!(names(other) %in% coefs))) {
+	# wrong <- names(other)[which(!(names(other) %in% coefs))]
+	# ifelse (length(wrong)>1, stop (paste("Variables", wrong, "not found in model")),
+							 # stop (paste("Variable", wrong, "not found in model"))
+			# )              
+# }
 if (!is.null(other)) {
 	ph <- other[which(names(other) %in% coefs)]
 	nd [match(names(ph), coefs)] <- as.vector(unlist(ph))
@@ -66,11 +77,17 @@ if(length(factors)>0){
 		} else nd[(n+1):(n + extras),names(lvls)] <- as.vector(unlist(lvls))
 }
 	
+	if(use.predict) {
+nd <- nd[1:n,]
+pr <- predict(object, newdata=nd)
+return(pr)
+}else{
 nd <-   as.list(nd)
 
 
 mm <- model.matrix(as.formula(paste("~",paste(vars, collapse="+"))), data=nd)
 mm <- mm[1:n,]
+nd <- lapply(nd, function(x) x[1:n])
 y_hat<-mm%*%betas
 
 pr <- data.frame(cbind(xvalues,y_hat))
@@ -106,6 +123,14 @@ if(class(object)[1]=="glmmPQL"){
 	pr$LowerCI <- apply(sim,2,quantile,(1-conf/100)/2)
     pr$UpperCI <- apply(sim,2,quantile,1-((1-conf/100)/2))
 }
+if(class(object)[1]=="brmsfit"){
+    probs <- c((1-conf/100)/2,1-((1-conf/100)/2))
+    brms_predict <- as.data.frame(predict(object, newdata=nd, probs=probs, re_formula=NA))
+	pr$LowerCI <- brms_predict[,paste0("Q",probs[1]*100)]
+    pr$UpperCI <- brms_predict[,paste0("Q",probs[2]*100)]
+	pr$brms_estimate_check <- brms_predict$Estimate
+}
+
 }
 
 if(unlink==T){
@@ -114,5 +139,5 @@ pr[,2:ncol(pr)] <- family(object)$linkinv(as.matrix(pr[,2:ncol(pr)]))
 
 return (pr)
 
-
+}
 }

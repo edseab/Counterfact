@@ -76,17 +76,29 @@ if(length(factors)>0){
 		for(i in 1:length(lvls)) nd[(n+1):(n + extras),names(lvls)[i]] <-as.vector(unlist(lvls[i]))
 		} else nd[(n+1):(n + extras),names(lvls)] <- as.vector(unlist(lvls))
 }
+
 	
 	if(use.predict) {
+if(class(object)[1] %in% c("lmerMod","glmmPQL","glmerMod","lmerModLmerTest")){
+ranints <- names(other)[which(names(other) %in% names(ranef(object)))]
+if(length(ranints>0)) nd[,ranints] <- as.data.frame(lapply(other[ranints], function(x)rep(x, nrow(nd))))
+}
 nd <- nd[1:n,]
 pr <- predict(object, newdata=nd)
 return(pr)
 }else{
 nd <-   as.list(nd)
 
-
 mm <- model.matrix(as.formula(paste("~",paste(vars, collapse="+"))), data=nd)
 mm <- mm[1:n,]
+if(class(object)[1] %in% c("lmerMod","glmmPQL","glmerMod","lmerModLmerTest")){
+ranints <- names(other)[which(names(other) %in% names(ranef(object)))]
+if(length(ranints>0)){
+   for (i in 1:length(ranints)){
+        opts <- ranef(object)[[match(ranints[i],names(ranef(object)))]]
+		multiplier <- unlist(opts)[match(other[ranints][[i]], rownames(opts))]
+ mm[,1] <- mm[,1]*multiplier
+}}}
 nd <- lapply(nd, function(x) x[1:n])
 y_hat<-mm%*%betas
 

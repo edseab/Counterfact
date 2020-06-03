@@ -21,7 +21,7 @@ if(class(object)[1] %in% c("brmsfit")){
  vars <- vars[!grepl(" | ", vars)]
 }else {
 if(class(object)[1] %in% c("lmerMod","glmmPQL","glmerMod","lmerModLmerTest")) betas <- fixef(object)
-if(class(object)[1] %in% c("lm")) betas <- coef(object)
+if(class(object)[1] %in% c("lm","glm")) betas <- coef(object)
 
 vars <- attr(terms(object),"term.labels")
 coefs<-vars

@@ -1,0 +1,61 @@
+
+library(lme4)
+
+# simulate some data
+set.seed(123)
+N <- 1000
+x1 <- rnorm (N,5,2)
+x2 <- rbinom(N,20,0.25)
+id_var <- sample(c(1:200), N, replace=T)
+ranef <- rnorm(200,0,1.3)
+b1 <- 0.2
+b2 <- - 0.4
+sig <- 1
+intercept <- 2
+mu <- intercept + b1*x1+b2*x2 + ranef[id_var] 
+y <- rnorm(N,mu,sig)
+y_binary <- rbinom(N,1,1/(1+exp(-y)))
+
+d <- as.data.frame(cbind(y_binary,y2_binary,y,x1,x2,id_var))
+
+# run a logit model
+mod <- glmer(y_binary ~ x1 + x2 + (1|id_var), family=binomial("logit"), data=d)
+
+# Run the counterfactual. If you have random effects and CI=T this can be slow because of having to bootstrap the CIsims
+
+cf_mod <- counterfact(mod, # 1st argument is the model object
+                      x="x1", # x argument is which independent variable do you want to vary (write in quote marks)
+				      other=list(x2=6,id_var=99), # sets the counterfactual value for all other independent vars. Defaults to the mean value for each variable.
+				      range= c(-1,12), # what do you want your cariable to vary between. Defaults to whatever the actual range of data in your dataset is.
+                      n=50, # defaults to 1000
+                      values = NULL, # can use instead of range and n arguments, to give specific values of x that you want to have counterfactual y values for
+					  CI=T, # do you want confidence intervals?
+					  CIsims=100, # if model is mexed effects, CIs have to be bootstrapped. How many simulations do you want?
+					  PI=F, # Prediction intervals?
+					  PIsims=100, # how many boostrap iterations for prediction intervals
+					  conf=95, # What level do you want your CI defaults to 95%
+					  unlink=T, # If the model has a link function (eg. logit), do you want to predicted values to be the raw values (i.e. log odds) or transformed (i.e. probabilities) 
+                      progress="txt") # A progress bar, if you want it
+
+
+# Now Plot	
+plot(cf_mod$xvalues,cf_mod$predicted.mean, type="l", col="forestgreen",lwd=2, ylim=c(0,1),ylab="Predicted Probability", xlab="x1")
+# Add Confidence Intervals
+with(cf_mod,polygon(c(xvalues,rev(xvalues)),c(LowerCI,rev(UpperCI)),col = adjustcolor("forestgreen",0.3), border = FALSE))
+legend(0.8,0.8, lty=1, col=c("forestgreen"),lwd=2,cex=1,	legend=c("x2=6, id_var=99"))
+
+# If we want we can run a new counterfact with different values for x2 and id_var
+
+cf_mod_2 <- counterfact(mod, x="x1", other=list(x2=2,id_var=20),range= c(-1,12),
+                      n=50,values = NULL,CI=T, CIsims=100,PI=F,
+					  PIsims=100,conf=95,unlink=T,progress="txt")
+
+plot(cf_mod$xvalues,cf_mod$predicted.mean, type="l", col="forestgreen",lwd=2, ylim=c(0,1),ylab="Predicted Probability", xlab="x1")
+# Add Confidence Intervals
+with(cf_mod,polygon(c(xvalues,rev(xvalues)),c(LowerCI,rev(UpperCI)),col = adjustcolor("forestgreen",0.3), border = FALSE))
+#Now add second counterfactual + CI
+lines(cf_mod_2$xvalues,cf_mod_2$predicted.mean, type="l", col="goldenrod",lwd=2)
+with(cf_mod_2,polygon(c(xvalues,rev(xvalues)),c(LowerCI,rev(UpperCI)),col = adjustcolor("goldenrod",0.3), border = FALSE))
+
+# Legend finally
+legend(0.8,0.8, lty=1, col=c("forestgreen", "goldenrod"),lwd=2,cex=1,	legend=c("x2=6, id_var=99", "x2=12,id_var==20"))

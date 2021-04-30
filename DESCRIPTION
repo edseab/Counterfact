@@ -1,4 +1,4 @@
-Package: Counterfact
+Package: LeadershipModel
 Title: Produces counterfactual predictions for an independant variable of interest
 Version: 0.0.0.9000
 Authors@R: 

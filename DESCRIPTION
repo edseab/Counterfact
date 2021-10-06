@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "ed.seabright@gmail.com",
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+Description:A set of functions I like to use. polyCurve from https://fromthebottomoftheheap.net/2013/01/11/shading-regions-under-a-curve/.
 License: What license it uses
 Depends: lme4
 Encoding: UTF-8

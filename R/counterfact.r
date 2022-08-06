@@ -1,8 +1,10 @@
 
 counterfact <- function (object, x, range = "standard", n=1000, values = NULL, default = mean, CI=FALSE, PI=FALSE,
-other=NULL, CIsims = 1000, PIsims= 1000, conf=95, unlink=F, data=summary(object)$call$data, progress="none", use.predict=F,...){
+other=NULL, CIsims = 1000, PIsims= 1000, conf=95, unlink=F, data=summary(object)$call$data, progress="none", use.predict=F,mixture=FALSE,...){
 
-
+if(mixture & class(object)[1]!="glmmTMB"){
+  stop("Mixture models (zero-inflation, hurdle...) currently only compatible with glmmTMB models")
+}
 ifelse(class(object)[1]=="brmsfit", d <- object$data, d <- eval(parse(text=as.character(c(data)))))
 if (!is.character(x)) x <- deparse(substitute(x))
 
@@ -100,7 +102,12 @@ if(length(ranints>0)){
  mm[,1] <- mm[,1]*multiplier
 }}}
 nd <- lapply(nd, function(x) x[1:n])
-y_hat<-mm%*%betas
+
+if (mixture){
+  mmcond <- mm[,names(betas$cond)]
+  mmzi <- mm[,names(betas$zi)]
+  y_hat<-exp( mmcond%*%betas$cond)*(exp(mmzi%*%-betas$zi)/(1+exp(mmzi%*%-betas$zi)))
+}else {y_hat<-mm%*%betas}
 
 pr <- data.frame(cbind(xvalues,y_hat))
 colnames (pr) [2] <- "predicted.mean"
@@ -135,6 +142,20 @@ if(class(object)[1]=="glmmPQL"){
 	pr$LowerCI <- apply(sim,2,quantile,(1-conf/100)/2)
     pr$UpperCI <- apply(sim,2,quantile,1-((1-conf/100)/2))
 }
+  if(class(object)[1]=="glmmTMB"){
+    if(mixture){
+      params <- c(names(betas$cond),paste0("zi~",names(betas$zi)))
+      vc <- vcov(object,full=T)[params,params]
+      sim <- matrix(NA, CIsims, n)
+      for (i in 1: CIsims){
+        betas.sim <- rmvnorm(n=1,mean=c(betas$cond,betas$zi),sigma=vc)
+        sim[i,] <- exp( mmcond%*%betas.sim[1:length(betas$cond)])*(exp(mmzi%*%-betas.sim[(length(betas$cond)+1):length(betas.sim)])/(1+exp(mmzi%*%-betas.sim[(length(betas$cond)+1):length(betas.sim)])))
+      }
+      pr$LowerCI <- apply(sim,2,quantile,(1-conf/100)/2)
+      pr$UpperCI <- apply(sim,2,quantile,1-((1-conf/100)/2))
+      
+    }
+  }
 if(class(object)[1]=="brmsfit"){
     probs <- c((1-conf/100)/2,1-((1-conf/100)/2))
     brms_predict <- as.data.frame(predict(object, newdata=nd, probs=probs, re_formula=NA))
@@ -143,11 +164,14 @@ if(class(object)[1]=="brmsfit"){
 	pr$brms_estimate_check <- brms_predict$Estimate
 }
 
+
 }
 
-if(unlink==T){
+if(unlink==T & !mixture){
 pr[,2:ncol(pr)] <- family(object)$linkinv(as.matrix(pr[,2:ncol(pr)]))
 }
+
+
 
 return (pr)
 

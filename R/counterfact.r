@@ -22,7 +22,7 @@ if(class(object)[1] %in% c("brmsfit")){
  vars <- attr(terms(as.formula(object$formula)), "term.labels")
  vars <- vars[!grepl(" | ", vars)]
 }else {
-if(class(object)[1] %in% c("lmerMod","glmmPQL","glmerMod","lmerModLmerTest")) betas <- fixef(object)
+if(class(object)[1] %in% c("lmerMod","glmmPQL","glmerMod","lmerModLmerTest","glmmTMB")) betas <- fixef(object)
 if(class(object)[1] %in% c("lm","glm")) betas <- coef(object)
 
 vars <- attr(terms(object),"term.labels")
@@ -44,8 +44,10 @@ if(all(colnames(d) %in% factors)) stop ("counterfact bugs with no continuous pre
 nd <- unlist(lapply(as.data.frame(d[,which(!(colnames(d) %in% factors))]),function(x)f(x,na.rm=T)))
 names(nd) <- colnames(d)[which(!(colnames(d) %in% factors))]
 if (length(factors)>0) {for (i in 1:length(factors)){
-	nd <- append(nd, NA, which(colnames(d)==factors[i])-1)}
-	names(nd)[which(colnames(d) %in% factors)]<-factors}
+	nd <- append(nd, NA, which(colnames(d)==factors[i])-1)
+	}
+	names(nd)[which(colnames(d) %in% factors)]<-factors
+	}
 
 # if (!is.null(other) & any(!(names(other) %in% coefs))) {
 	# wrong <- names(other)[which(!(names(other) %in% coefs))]
@@ -74,9 +76,12 @@ if(length(factors)>0){
 	extras <- prod(unlist(lapply(as.list(d)[factors],function(.)length(unique(.)))))
 	nd <- rbind (nd, nd[(n-extras+1):n,])
 	lvls <- lapply(as.list(d)[factors],function(.)levels(as.factor(.)))
-	if (length(lvls)>1){
-		for(i in 1:length(lvls)) nd[(n+1):(n + extras),names(lvls)[i]] <-as.vector(unlist(lvls[i]))
-		} else nd[(n+1):(n + extras),names(lvls)] <- as.vector(unlist(lvls))
+
+		for(i in 1:length(lvls)){ 
+		  nd[(n+1):(n + extras),names(lvls)[i]] <-as.vector(unlist(lvls[i]))
+		  nd[,names(lvls)[i]]<- relevel(as.factor(nd[,names(lvls)[i]]),ref=lvls[[i]][1])
+
+		}
 }
 
 	
